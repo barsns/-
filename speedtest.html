@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Speedtest</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #1a1a1a;
+            color: #fff;
+            margin: 0;
+            padding: 16px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+        .header h1 {
+            color: #2AABEE;
+            margin: 0 0 8px;
+            font-size: 24px;
+        }
+        .speed-card {
+            background: #2d2d2d;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            transition: all 0.3s;
+        }
+        .speed-value {
+            font-size: 48px;
+            font-weight: bold;
+            text-align: center;
+            margin: 10px 0;
+            color: #2AABEE;
+        }
+        .speed-label {
+            text-align: center;
+            color: #aaa;
+            font-size: 14px;
+            margin-bottom: 16px;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #444;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #2AABEE, #8B5CF6);
+            width: 0%;
+            transition: width 0.3s;
+        }
+        .status {
+            text-align: center;
+            color: #aaa;
+            margin: 16px 0;
+            font-size: 16px;
+        }
+        .ping-details {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin: 20px 0;
+        }
+        .ping-item {
+            background: #333;
+            border-radius: 12px;
+            padding: 12px;
+            text-align: center;
+        }
+        .ping-item .value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #2AABEE;
+            margin: 4px 0;
+        }
+        .ping-item .label {
+            color: #aaa;
+            font-size: 12px;
+        }
+        .button {
+            background: #2AABEE;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 16px;
+            font-size: 18px;
+            font-weight: 600;
+            width: 100%;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin: 8px 0;
+        }
+        .button:active {
+            background: #1a8ac4;
+        }
+        .button:disabled {
+            background: #444;
+            cursor: not-allowed;
+        }
+        .button.secondary {
+            background: #333;
+            color: #fff;
+        }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #333;
+        }
+        .info-label {
+            color: #aaa;
+        }
+        .info-value {
+            color: #fff;
+            font-weight: 500;
+        }
+        .quality {
+            text-align: center;
+            font-size: 18px;
+            padding: 8px;
+            border-radius: 8px;
+            margin: 16px 0;
+        }
+        .quality.good {
+            background: rgba(0,200,0,0.2);
+            color: #4caf50;
+        }
+        .quality.medium {
+            background: rgba(255,165,0,0.2);
+            color: #ff9800;
+        }
+        .quality.bad {
+            background: rgba(255,0,0,0.2);
+            color: #f44336;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            color: #666;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Speedtest клиента</h1>
+            <p style="color: #aaa;">Измерение на твоем устройстве</p>
+        </div>
+
+        <div class="speed-card">
+            <!-- Download Speed -->
+            <div class="speed-value" id="downloadSpeed">0</div>
+            <div class="speed-label">Download (Мбит/с)</div>
+            
+            <!-- Upload Speed -->
+            <div class="speed-value" id="uploadSpeed" style="display: none;">0</div>
+            <div class="speed-label" id="uploadLabel" style="display: none;">Upload (Мбит/с)</div>
+            
+            <!-- Progress -->
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress" style="width: 0%;"></div>
+            </div>
+            
+            <div class="status" id="status">Готов к тесту</div>
+            
+            <!-- Ping Details -->
+            <div class="ping-details">
+                <div class="ping-item">
+                    <div class="value" id="ping">0</div>
+                    <div class="label">Пинг (мс)</div>
+                </div>
+                <div class="ping-item">
+                    <div class="value" id="jitter">0</div>
+                    <div class="label">Jitter</div>
+                </div>
+                <div class="ping-item">
+                    <div class="value" id="loss">0%</div>
+                    <div class="label">Потери</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Connection Info -->
+        <div class="speed-card" id="infoCard" style="display: none;">
+            <h3 style="margin-top: 0;">🌐 Информация</h3>
+            <div class="info-row">
+                <span class="info-label">IP адрес:</span>
+                <span class="info-value" id="ip">Определение...</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Провайдер:</span>
+                <span class="info-value" id="isp">-</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Город:</span>
+                <span class="info-value" id="city">-</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Страна:</span>
+                <span class="info-value" id="country">-</span>
+            </div>
+        </div>
+
+        <!-- Quality Assessment -->
+        <div class="quality" id="quality" style="display: none;"></div>
+
+        <!-- Buttons -->
+        <button class="button" id="startBtn" onclick="startFullTest()">🚀 Начать полный тест</button>
+        <button class="button secondary" id="pingOnlyBtn" onclick="pingTest()">📊 Только пинг</button>
+        <button class="button secondary" id="sendBtn" onclick="sendResults()" style="display: none;">📤 Отправить в бот</button>
+        
+        <div class="footer">
+            Тест выполняется на вашем устройстве через браузер
+        </div>
+    </div>
+
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script>
+        // Инициализация Telegram WebApp
+        const tg = window.Telegram.WebApp;
+        tg.expand(); // Разворачиваем на весь экран
+        tg.ready();
+        
+        // Настройки теста
+        const TEST_CONFIG = {
+            download: {
+                small: 'https://cachefly.cachefly.net/10mb.test', // 10MB
+                medium: 'https://cachefly.cachefly.net/50mb.test', // 50MB
+                large: 'https://cachefly.cachefly.net/100mb.test', // 100MB
+                sizes: {
+                    small: 10,
+                    medium: 50,
+                    large: 100
+                }
+            },
+            upload: {
+                url: 'https://httpbin.org/post',
+                size: 5 // MB
+            }
+        };
+
+        let testResults = {
+            download: 0,
+            upload: 0,
+            ping: 0,
+            jitter: 0,
+            loss: 0,
+            ip: '',
+            isp: '',
+            city: '',
+            country: '',
+            timestamp: new Date().toISOString()
+        };
+
+        // Функция для получения IP и информации
+        async function getIPInfo() {
+            try {
+                // Получаем IP
+                const ipResponse = await fetch('https://api.ipify.org?format=json');
+                const ipData = await ipResponse.json();
+                testResults.ip = ipData.ip;
+                document.getElementById('ip').textContent = ipData.ip;
+                
+                // Получаем детальную информацию
+                const infoResponse = await fetch(`http://ip-api.com/json/${ipData.ip}`);
+                const infoData = await infoResponse.json();
+                
+                if (infoData.status === 'success') {
+                    testResults.isp = infoData.isp || 'Неизвестно';
+                    testResults.city = infoData.city || 'Неизвестно';
+                    testResults.country = infoData.country || 'Неизвестно';
+                    
+                    document.getElementById('isp').textContent = infoData.isp || 'Неизвестно';
+                    document.getElementById('city').textContent = infoData.city || 'Неизвестно';
+                    document.getElementById('country').textContent = infoData.country || 'Неизвестно';
+                }
+                
+                document.getElementById('infoCard').style.display = 'block';
+            } catch (e) {
+                console.error('IP info error:', e);
+            }
+        }
+
+        // Тест пинга
+        async function pingTest() {
+            const status = document.getElementById('status');
+            const progress = document.getElementById('progress');
+            
+            status.textContent = '📊 Измерение пинга...';
+            progress.style.width = '30%';
+            
+            const pings = [];
+            const lost = [];
+            const count = 10;
+            
+            for (let i = 0; i < count; i++) {
+                const start = performance.now();
+                try {
+                    await fetch('https://cachefly.cachefly.net/1mb.test?' + Date.now(), { 
+                        method: 'HEAD',
+                        mode: 'no-cors',
+                        cache: 'no-cache'
+                    });
+                    const end = performance.now();
+                    pings.push(end - start);
+                    lost.push(false);
+                } catch (e) {
+                    lost.push(true);
+                }
+                
+                progress.style.width = (30 + (i / count) * 30) + '%';
+                await new Promise(r => setTimeout(r, 100));
+            }
+            
+            if (pings.length > 0) {
+                const avgPing = pings.reduce((a, b) => a + b, 0) / pings.length;
+                const jitter = Math.max(...pings) - Math.min(...pings);
+                const loss = (lost.filter(l => l).length / count) * 100;
+                
+                testResults.ping = Math.round(avgPing);
+                testResults.jitter = Math.round(jitter);
+                testResults.loss = loss;
+                
+                document.getElementById('ping').textContent = Math.round(avgPing);
+                document.getElementById('jitter').textContent = Math.round(jitter);
+                document.getElementById('loss').textContent = loss + '%';
+                
+                status.textContent = '✅ Пинг измерен';
+                progress.style.width = '60%';
+                
+                return true;
+            }
+            
+            return false;
+        }
+
+        // Тест скачивания
+        async function downloadTest() {
+            const status = document.getElementById('status');
+            const progress = document.getElementById('progress');
+            
+            status.textContent = '📥 Тест скачивания...';
+            
+            const url = TEST_CONFIG.download.medium;
+            const fileSize = TEST_CONFIG.download.sizes.medium * 1024 * 1024; // в байтах
+            
+            const startTime = performance.now();
+            let downloaded = 0;
+            
+            try {
+                const response = await fetch(url + '?cache=' + Date.now(), {
+                    cache: 'no-cache',
+                    mode: 'cors'
+                });
+                
+                const reader = response.body.getReader();
+                
+                while (true) {
+                    const {done, value} = await reader.read();
+                    if (done) break;
+                    downloaded += value.length;
+                    
+                    // Обновляем прогресс
+                    const percent = Math.min(100, (downloaded / fileSize) * 100);
+                    progress.style.width = (60 + (percent * 0.3)) + '%';
+                }
+                
+                const endTime = performance.now();
+                const duration = (endTime - startTime) / 1000; // в секундах
+                
+                if (duration > 0) {
+                    const speedMbps = (downloaded * 8) / (duration * 1024 * 1024);
+                    testResults.download = Math.round(speedMbps * 10) / 10;
+                    
+                    document.getElementById('downloadSpeed').textContent = testResults.download;
+                    
+                    // Цвет в зависимости от скорости
+                    const color = testResults.download >= 300 ? '#4caf50' : 
+                                 testResults.download >= 100 ? '#ff9800' : '#f44336';
+                    document.getElementById('downloadSpeed').style.color = color;
+                    
+                    status.textContent = '✅ Скачивание завершено';
+                    progress.style.width = '90%';
+                    
+                    return true;
+                }
+            } catch (e) {
+                console.error('Download error:', e);
+                status.textContent = '❌ Ошибка скачивания';
+            }
+            
+            return false;
+        }
+
+        // Тест загрузки
+        async function uploadTest() {
+            const status = document.getElementById('status');
+            const progress = document.getElementById('progress');
+            
+            status.textContent = '📤 Тест загрузки...';
+            
+            const uploadSize = TEST_CONFIG.upload.size * 1024 * 1024; // 5MB в байтах
+            const data = new Blob([new ArrayBuffer(uploadSize)]);
+            
+            const startTime = performance.now();
+            
+            try {
+                const formData = new FormData();
+                formData.append('file', data, 'test.bin');
+                
+                const response = await fetch(TEST_CONFIG.upload.url, {
+                    method: 'POST',
+                    body: formData,
+                    mode: 'cors'
+                });
+                
+                const endTime = performance.now();
+                const duration = (endTime - startTime) / 1000;
+                
+                if (duration > 0) {
+                    const speedMbps = (uploadSize * 8) / (duration * 1024 * 1024);
+                    testResults.upload = Math.round(speedMbps * 10) / 10;
+                    
+                    document.getElementById('uploadSpeed').style.display = 'block';
+                    document.getElementById('uploadLabel').style.display = 'block';
+                    document.getElementById('uploadSpeed').textContent = testResults.upload;
+                    
+                    status.textContent = '✅ Загрузка завершена';
+                    progress.style.width = '100%';
+                    
+                    return true;
+                }
+            } catch (e) {
+                console.error('Upload error:', e);
+                status.textContent = '❌ Ошибка загрузки (пропускаем)';
+            }
+            
+            return false;
+        }
+
+        // Полный тест
+        async function startFullTest() {
+            const startBtn = document.getElementById('startBtn');
+            const pingBtn = document.getElementById('pingOnlyBtn');
+            const sendBtn = document.getElementById('sendBtn');
+            
+            startBtn.disabled = true;
+            pingBtn.disabled = true;
+            sendBtn.style.display = 'none';
+            
+            // Сброс результатов
+            testResults = {
+                download: 0,
+                upload: 0,
+                ping: 0,
+                jitter: 0,
+                loss: 0,
+                ip: testResults.ip || '',
+                isp: testResults.isp || '',
+                city: testResults.city || '',
+                country: testResults.country || '',
+                timestamp: new Date().toISOString()
+            };
+            
+            // Получаем IP информацию
+            await getIPInfo();
+            
+            // Тест пинга
+            await pingTest();
+            
+            // Тест скачивания
+            await downloadTest();
+            
+            // Тест загрузки
+            await uploadTest();
+            
+            // Показываем качество соединения
+            showQuality();
+            
+            startBtn.disabled = false;
+            pingBtn.disabled = false;
+            sendBtn.style.display = 'block';
+        }
+
+        // Оценка качества
+        function showQuality() {
+            const qualityDiv = document.getElementById('quality');
+            let qualityText = '';
+            let qualityClass = '';
+            
+            const avgSpeed = (testResults.download + testResults.upload) / 2;
+            
+            if (avgSpeed >= 150 && testResults.ping < 100) {
+                qualityText = '🚀 Отличное соединение!';
+                qualityClass = 'good';
+            } else if (avgSpeed >= 50 && testResults.ping < 200) {
+                qualityText = '👍 Хорошее соединение';
+                qualityClass = 'medium';
+            } else {
+                qualityText = '⚠️ Слабое соединение';
+                qualityClass = 'bad';
+            }
+            
+            qualityDiv.textContent = qualityText;
+            qualityDiv.className = 'quality ' + qualityClass;
+            qualityDiv.style.display = 'block';
+        }
+
+        // Отправка результатов в бот
+        function sendResults() {
+            tg.sendData(JSON.stringify({
+                type: 'speedtest',
+                results: testResults
+            }));
+            
+            document.getElementById('status').textContent = '📤 Результаты отправлены!';
+        }
+
+        // Автоматический запуск теста при открытии
+        window.onload = () => {
+            setTimeout(() => {
+                startFullTest();
+            }, 500);
+        };
+    </script>
+</body>
+</html>
